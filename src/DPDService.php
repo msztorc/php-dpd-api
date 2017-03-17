@@ -35,6 +35,10 @@ class DPDService
 
     }
 
+    /**
+     * Check configuration
+     * @return type
+     */
     private function _checkConfiguration()
     {
         // required
@@ -57,6 +61,10 @@ class DPDService
         if (!isset($this->config->lang_code) || empty($this->config->lang_code)) $this->config->lang_code = 'PL';
     }
 
+    /**
+     * Get auth data
+     * @return array
+     */
     private function _authData()
     {
         return [
@@ -66,22 +74,38 @@ class DPDService
         ];      
     }
 
-
+    /**
+     * Set sender data
+     * @param array $sender 
+     */
     public function setSender(array $sender)
     {
         $this->sender = $sender;
     }
 
+    /**
+     * Get sender data
+     * @return array
+     */
     public function getSender()
     {
         return $this->sender;
     }
 
+    /**
+     * Get session id
+     * @return string
+     */
     public function getSessionId()
     {
         return $this->sessionId;
     }   
 
+    /**
+     * Validate package
+     * @param array $package 
+     * @return boolean
+     */
     public function validatePackage(array $package)
     {
         if (!isset($package['parcels']) || count($package['parcels']) == 0) 
@@ -119,27 +143,35 @@ class DPDService
         return true;
     }
 
+    /**
+     * Prepare package
+     * @param array $parcels 
+     * @param array $receiver 
+     * @param string $payer 
+     * @param array $services 
+     * @param string $ref 
+     * @return object
+     */
     public function createPackage(array $parcels, array $receiver, $payer = 'SENDER', array $services = [], $ref = '')
     {
         //validate
-        if (count($parcels) == 0 || count($payer) == 0 || count($receiver) == 0) 
-        {
+        if (count($parcels) == 0 || count($receiver) == 0) 
             throw new \Exception('Some required params are missing', 101);
-        }
 
         if (is_null($this->sender) || !is_array($this->sender) || count($this->sender) == 0)
-        {
-            throw new \Exception('Sender data are required', 102);
-        }       
+            throw new \Exception('Sender data are required', 102);   
 
         if (strlen($ref) > 27)
             throw new \Exception('REF field exceeds 27 chars', 103);
         else
-            $ref = str_split($ref, 9);      
+            $ref = str_split($ref, 9);
+
+        if (strtoupper($payer) != 'SENDER' || strtoupper($payer) != 'RECEIVER')
+            throw new \Exception('Wrong payer type (SENDER or RECEIVER)', 104);
 
         $package = [
             'sender' => $this->getSender(),
-            'payerType' => $payer,
+            'payerType' => strtoupper($payer),
             'receiver' => $receiver, 
             'parcels' => $parcels,
             'services' => $services,
@@ -158,10 +190,10 @@ class DPDService
      * Send package
      * @param array $parcels 
      * @param array $receiver 
-     * @param type|string $payer 
-     * @param array|array $services 
-     * @param type|string $ref 
-     * @return type
+     * @param string $payer 
+     * @param array $services 
+     * @param string $ref 
+     * @return object
      */
     public function sendPackage(array $parcels, array $receiver, $payer = 'SENDER', array $services = [], $ref = '')
     {
@@ -214,7 +246,7 @@ class DPDService
     /**
      * Send packages
      * @param array $packages 
-     * @return type
+     * @return object
      */
     public function sendPackages(array $packages)
     {
@@ -273,6 +305,12 @@ class DPDService
 
     }   
 
+    /**
+     * Add parcels to existing package
+     * @param string $packageId 
+     * @param array $parcels 
+     * @return object
+     */
     public function addParcelsToPackage($packageId, array $parcels)
     {
 
@@ -318,6 +356,16 @@ class DPDService
 
     }   
 
+    /**
+     * Generate speedlabels by packages ids
+     * @param array $ids 
+     * @param array $pickupAddress 
+     * @param string $shippingType 
+     * @param string $fileFormat 
+     * @param string $pageFormat 
+     * @param string $labelType 
+     * @return object
+     */
     public function generateSpeedLabelsByPackageIds(array $ids, array $pickupAddress, $shippingType = 'DOMESTIC', $fileFormat = 'PDF', $pageFormat = 'A4', $labelType = 'BIC3')
     {
 
@@ -343,6 +391,17 @@ class DPDService
         return $this->generateSpeedLabels($refs, $pickupAddress, $fileFormat, $pageFormat, $labelType);
     }
 
+
+    /**
+     * Generate speedlabels by session id
+     * @param string $id 
+     * @param array $pickupAddress 
+     * @param string $shippingType 
+     * @param string $fileFormat 
+     * @param string $pageFormat 
+     * @param string $labelType 
+     * @return object
+     */
     public function generateSpeedLabelsBySessionId($id, array $pickupAddress, $shippingType = 'DOMESTIC', $fileFormat = 'PDF', $pageFormat = 'A4', $labelType = 'BIC3')
     {
 
@@ -359,6 +418,15 @@ class DPDService
         return $this->generateSpeedLabels($refs, $pickupAddress, $fileFormat, $pageFormat, $labelType);
     }   
 
+    /**
+     * Generate speedlabels by refs array
+     * @param array $refs 
+     * @param array $pickupAddress 
+     * @param string $fileFormat 
+     * @param string $pageFormat 
+     * @param string $labelType 
+     * @return object
+     */
     public function generateSpeedLabels(array $refs, array $pickupAddress, $fileFormat = 'PDF', $pageFormat = 'A4', $labelType = 'BIC3')
     {
         if (count($refs) == 0) 
@@ -422,7 +490,14 @@ class DPDService
         }
     }
 
-
+    /**
+     * Generate protocol by packages ids 
+     * @param array $ids 
+     * @param array $pickupAddress 
+     * @param string $shippingType 
+     * @param string $pageFormat 
+     * @return object
+     */
     public function generateProtocolByPackageIds(array $ids, array $pickupAddress, $shippingType = 'DOMESTIC', $pageFormat = 'A4')
     {
 
@@ -448,6 +523,14 @@ class DPDService
         return $this->generateProtocol($refs, $pickupAddress, $pageFormat);
     }
 
+    /**
+     * Generate protocol by session id
+     * @param type $id 
+     * @param array $pickupAddress 
+     * @param string $shippingType 
+     * @param string $pageFormat 
+     * @return object
+     */
     public function generateProtocolBySessionId($id, array $pickupAddress, $shippingType = 'DOMESTIC', $pageFormat = 'A4')
     {
 
@@ -465,6 +548,13 @@ class DPDService
     }
 
 
+    /**
+     * Generate protocol by refs
+     * @param array $refs 
+     * @param array $pickupAddress 
+     * @param string $pageFormat 
+     * @return object
+     */
     public function generateProtocol(array $refs, array $pickupAddress, $pageFormat = 'A4')
     {
         if (count($refs) == 0) 
@@ -516,7 +606,16 @@ class DPDService
         }
     }
 
-
+    /**
+     * Pickup call
+     * @param array $protocols 
+     * @param type $pickupDate 
+     * @param type $pickupTimeFrom 
+     * @param type $pickupTimeTo 
+     * @param array $contactInfo 
+     * @param array $pickupAddress 
+     * @return object
+     */
     public function pickupRequest(array $protocols, $pickupDate, $pickupTimeFrom, $pickupTimeTo, array $contactInfo, array $pickupAddress)
     {
         if (count($protocols) == 0) 
@@ -651,6 +750,5 @@ class DPDService
             file_put_contents($log_file, "--- ". date('Y-m-d H:i:s') ."\r\n". $logData ."\r\n\r\n", FILE_APPEND);
         }
     }               
-
 
 }
