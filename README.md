@@ -22,14 +22,14 @@ of course you can also download zip file, unpack and include to your project
 Main configuration is located in `config.php` file
 
 ```
-    'fid' => '1495',
-    'username' => 'test', // username for api calls
-    'password' => 'KqvsoFLT2M', // password for api calls
-    'wsdl' => 'https://dpdservicesdemo.dpd.com.pl/DPDPackageObjServicesService/DPDPackageObjServices?WSDL', 
-    'lang_code' => 'PL', // lang code (required for api v2)
-    'api_version' => 2, // version of api methods (available api version: 1 or 2)
-    'debug' => true, // debug errors to logfile
-    'log_path' => 'logs' // path of log files
+'fid' => '1495',
+'username' => 'test', // username for api calls
+'password' => 'KqvsoFLT2M', // password for api calls
+'wsdl' => 'https://dpdservicesdemo.dpd.com.pl/DPDPackageObjServicesService/DPDPackageObjServices?WSDL', 
+'lang_code' => 'PL', // lang code (required for api v2)
+'api_version' => 2, // version of api methods (available api version: 1 or 2)
+'debug' => true, // debug errors to logfile
+'log_path' => 'logs' // path of log files
 ```
 
 ### Usage
