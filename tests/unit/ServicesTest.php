@@ -83,7 +83,7 @@ class ServicesTest extends TestCase
 
         //send package
         $result = $dpd->sendPackage($this->parcels, $this->receiver, 'SENDER');
-        $this->assertTrue(isset($result->parcels) && count($result->parcels) == 2);     
+        $this->assertTrue(isset($result->parcels) && !is_null($result->parcels) && count($result->parcels) == 2);     
 
         // generate speedlabel in default, pdf/a4 format
         $speedlabel = $dpd->generateSpeedLabelsByPackageIds([$result->packageId], $this->pickupAddress);

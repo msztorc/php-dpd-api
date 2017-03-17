@@ -166,7 +166,7 @@ class DPDService
         else
             $ref = str_split($ref, 9);
 
-        if (strtoupper($payer) != 'SENDER' || strtoupper($payer) != 'RECEIVER')
+        if (strtoupper($payer) != 'SENDER' && strtoupper($payer) != 'RECEIVER')
             throw new \Exception('Wrong payer type (SENDER or RECEIVER)', 104);
 
         $package = [
