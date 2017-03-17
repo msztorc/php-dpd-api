@@ -34,6 +34,8 @@ Main configuration is located in `config.php` file
 
 ### Usage
 
+**Full example**
+
 ```php
 <?php
 
@@ -124,6 +126,28 @@ $contactInfo = [
 $pickup = $dpd->pickupRequest([$protocol->documentId], $pickupDate, $pickupTimeFrom, $pickupTimeTo, $contactInfo, $pickupAddress);
 
 ```
+
+**Postcode verify**
+```php
+<?php
+
+use DPD\Services\DPDService;
+
+$dpd = new DPDService();
+
+$pc1 = $dpd->checkPostCode('UB3 5HL', 'GB'); //ok
+
+$pc2 = $dpd->checkPostCode('00-999', 'PL'); //ok
+
+$pc3 = $dpd->checkPostCode('33 100'); //ok
+
+$pc4 = $dpd->checkPostCode('33100'); //ok
+
+$pc5 = $dpd->checkPostCode('00-000'); //wrong
+
+```
+
+
 For more examples see unit tests
 
 ### Notes
