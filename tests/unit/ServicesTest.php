@@ -90,14 +90,14 @@ class ServicesTest extends TestCase
         $this->assertTrue(isset($speedlabel->filedata));
 
         // save speedlabel to pdf file
-        file_put_contents('pdf/slbl-pid' . $result->packageId . '.pdf', $speedlabel->filedata);
+        //file_put_contents('pdf/slbl-pid' . $result->packageId . '.pdf', $speedlabel->filedata);
 
         // generate protocol
         $protocol = $dpd->generateProtocolByPackageIds([$result->packageId], $this->pickupAddress);
         $this->assertTrue(isset($protocol->filedata));
 
         // save protocol to pdf file
-        file_put_contents('pdf/prot-pid' . $result->packageId . '.pdf', $protocol->filedata);
+        //file_put_contents('pdf/prot-pid' . $result->packageId . '.pdf', $protocol->filedata);
     
    
     }
@@ -122,7 +122,7 @@ class ServicesTest extends TestCase
         $this->assertTrue(isset($speedlabel->filedata));
 
         // save speedlabel to pdf file
-        file_put_contents('pdf/slbl-sid' . $dpd->getSessionId() . '.pdf', $speedlabel->filedata);
+        //file_put_contents('pdf/slbl-sid' . $dpd->getSessionId() . '.pdf', $speedlabel->filedata);
 
         // generate protocol
         $protocol = $dpd->generateProtocolBySessionId($dpd->getSessionId(), $this->pickupAddress);
@@ -130,7 +130,7 @@ class ServicesTest extends TestCase
         $this->assertTrue(isset($protocol->filedata));
 
         // save protocol to pdf file
-        file_put_contents('pdf/prot-sid' . $dpd->getSessionId() . '.pdf', $protocol->filedata);     
+        //file_put_contents('pdf/prot-sid' . $dpd->getSessionId() . '.pdf', $protocol->filedata);     
 
         // pickup call
         $pickupDate = '2017-08-23';
