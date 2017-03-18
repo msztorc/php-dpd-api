@@ -2,7 +2,7 @@
 
 Set of PHP classes to handle API of courier services (DPD Poland)
 
-[![Build Status](https://travis-ci.org/drawmyattention/php-boilerplate.svg?branch=master)](https://travis-ci.org/msztorc/php-dpd-api)
+[![Build Status](https://travis-ci.org/msztorc/php-dpd-api.svg?branch=master)](https://travis-ci.org/msztorc/php-dpd-api)
 [![License](http://img.shields.io/badge/license-MIT-brightgreen.svg?style=flat-square)](http://www.opensource.org/licenses/MIT)
 
 ## Installation
