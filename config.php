@@ -7,6 +7,7 @@ return (object) [
     'wsdl' => 'https://dpdservicesdemo.dpd.com.pl/DPDPackageObjServicesService/DPDPackageObjServices?WSDL',
     'lang_code' => 'PL',
     'api_version' => 2,
-    'debug' => true,
-    'log_path' => 'logs'
+    'debug' => false,
+    'log_path' => 'logs',
+    'timezone' => 'Europe/Warsaw'
 ];
