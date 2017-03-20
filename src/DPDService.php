@@ -3,8 +3,9 @@
 use StdClass;
 use SoapClient;
 use Exception;
+use SoapFault;
 
-class DPDService
+class DPDService extends SoapClient
 {
     const PKG_NUMS_GEN_ERR_POLICY = "ALL_OR_NOTHING"; //STOP_ON_FIRST_ERROR, IGNORE_ERRORS
     const PKG_SPLB_GEN_ERR_POLICY = "STOP_ON_FIRST_ERROR"; // IGNORE_ERRORS
@@ -12,7 +13,6 @@ class DPDService
     const PKG_PICK_GEN_ERR_POLICY = "IGNORE_ERRORS";
 
     protected $config = null;
-    protected $client = null;
     protected $sender = null;
     protected $sessionId = null;
     protected $apiVersion = 1;
@@ -37,13 +37,24 @@ class DPDService
         // set version of some api calls (used when available)
         $this->apiVersion = (isset($this->config->api_version) && (int)$this->config->api_version > 0) ? $this->config->api_version : 1;
 
-        // init client service
-        $this->client = new SoapClient($this->config->wsdl, [
+        // call parent constructor
+        parent::__construct($this->config->wsdl, [
             'trace' => (($this->config->debug) ? 1 : 0),
             'features' => SOAP_SINGLE_ELEMENT_ARRAYS,
             'cache_wsdl' => WSDL_CACHE_NONE
-        ]);      
+        ]);
 
+    }
+
+    public function setConfig($key, $value)
+    {
+        $this->config->{$key} = $value;
+        return $this->config->{$key};
+    }
+
+    public function getConfig($key)
+    {
+        return (isset($this->config->{$key})) ? $this->config->{$key} : null;
     }
 
     /**
@@ -70,6 +81,9 @@ class DPDService
 
         // set default language code to 'PL' for some api methods in version >= 2
         if (!isset($this->config->lang_code) || empty($this->config->lang_code)) $this->config->lang_code = 'PL';
+
+        // default debug
+        if (!isset($this->config->debug) || empty($this->config->debug)) $this->config->debug = false;
     }
 
     /**
@@ -155,6 +169,23 @@ class DPDService
     }
 
     /**
+     * Copies the arrays
+     * @param array $array 
+     * @return array
+     */
+    private function _arrayCopy(array $array)
+    {
+        $result = array();
+
+        foreach($array as $key => $value)
+        {
+            $result[$key] = (is_array($value) ? $this->_arrayCopy($value) : $value);
+        }
+
+        return $result;
+    }    
+
+    /**
      * Prepare package
      * @param array $parcels 
      * @param array $receiver 
@@ -184,11 +215,11 @@ class DPDService
             throw new Exception('Wrong payer type (SENDER or RECEIVER)', 105);
 
         $package = [
-            'sender' => $this->getSender(),
+            'sender' => $this->_arrayCopy($this->getSender()),
             'payerType' => strtoupper($payer),
-            'receiver' => $receiver, 
-            'parcels' => $parcels,
-            'services' => $services,
+            'receiver' => $this->_arrayCopy($receiver), 
+            'parcels' => $this->_arrayCopy($parcels),
+            'services' => $this->_arrayCopy($services),
             'ref1' => (isset($ref[0]) ? $ref[0] : ''),
             'ref2' => (isset($ref[1]) ? $ref[1] : ''),
             'ref3' => (isset($ref[2]) ? $ref[2] : ''),          
@@ -228,7 +259,11 @@ class DPDService
         {
 
             // api method call
-            $result = $this->client->__soapCall('generatePackagesNumbersV'. $this->apiVersion, [$params]);
+            $result = $this->__soapCall('generatePackagesNumbersV'. $this->apiVersion, [$params]);
+
+            // debug results
+            if (isset($this->config->debug) && $this->config->debug) 
+                var_dump($result);
 
             // get status
             $status = ($this->apiVersion > 1) ? $result->return->Status : $result->return->status;
@@ -252,7 +287,7 @@ class DPDService
         catch(SoapFault $e)
         {
             echo 'Caught exception: ',  $e->getMessage(), "\n";
-            $this->log($this->client->__getLastRequest());
+            $this->log($this->__getLastRequest());
         }
 
     }
@@ -266,28 +301,58 @@ class DPDService
     {
 
         if (count($packages) == 0) 
-            throw new Exception('`packages` argument is empty', 101);
+            throw new \Exception('`packages` argument is empty', 101);
 
-        $obj = new StdClass;
-        $obj->method = 'generatePackagesNumbersV'. $this->apiVersion;
+        $params=[
+            'openUMLV1' => [
+                'packages' => $packages,
+            ],
+            'pkgNumsGenerationPolicyV1' => self::PKG_NUMS_GEN_ERR_POLICY,
+            'authDataV1' => $this->_authData(),
+            'langCode'  => $this->config->lang_code
+        ];
 
-        // validate packages data
-        foreach($packages as $package)
+        $obj = new \StdClass;
+        $obj->method = 'generatePackagesNumbersV'. $this->apiVersion;       
+
+        try
         {
-            $this->validatePackage($package);
-        }       
 
-        $obj->packages = [];
+            // api method call
+            $result = $this->__soapCall('generatePackagesNumbersV'. $this->apiVersion, array($params));
 
-        // send packages
-        foreach($packages as $package)
-        {
-            $services = (isset($package['services']) && count($package['services']) > 0) ? $package['services'] : [];
-            $ref = (isset($package['ref']) && $package['ref'] != '') ? $package['ref'] : ''; 
-            $obj->packages[] = $this->sendPackage($package['parcels'], $package['receiver'], $package['payerType'], $services, $ref);
+            // debug results
+            if (isset($this->config->debug) && $this->config->debug) 
+                var_dump($result);            
+
+            // get status
+            $status = ($this->apiVersion > 1) ? $result->return->Status : $result->return->status;
+
+            // check status
+            if ($status == 'OK')
+            {           
+                $this->sessionId = ($this->apiVersion > 1) ? $result->return->SessionId : $result->return->sessionId;
+
+                $packages = ($this->apiVersion > 1) ? $result->return->Packages->Package[0] : $result->return->packages;
+            
+                $obj->sender = $this->getSender();
+
+                $obj->packages = [];
+                foreach($packages as $package)
+                {
+                    $obj->packages[] = $package;
+                }
+
+            } else $obj->success = false;
+
+            return $obj;
+
         }
-
-        return $obj;
+        catch(SoapFault $e)
+        {
+            $this->log($this->__getLastRequest());
+            throw new Exception($e->getMessage(), 300);
+        }
 
     }   
 
@@ -321,7 +386,11 @@ class DPDService
         {
 
             // api method call
-            $result = $this->client->__soapCall('appendParcelsToPackageV1', [$params]);
+            $result = $this->__soapCall('appendParcelsToPackageV1', [$params]);
+
+            // debug results
+            if (isset($this->config->debug) && $this->config->debug) 
+                var_dump($result);            
 
             // get status
             $status = $result->return->status;
@@ -337,7 +406,7 @@ class DPDService
         catch(SoapFault $e)
         {
             echo 'Caught exception: ',  $e->getMessage(), "\n";
-            $this->log($this->client->__getLastRequest());
+            $this->log($this->__getLastRequest());
         }       
 
     }   
@@ -455,7 +524,11 @@ class DPDService
         try
         {
             // api call
-            $result = $this->client->__soapCall('generateSpedLabelsV'. $this->apiVersion, [$params]);
+            $result = $this->__soapCall('generateSpedLabelsV'. $this->apiVersion, [$params]);
+
+            // debug results
+            if (isset($this->config->debug) && $this->config->debug) 
+                var_dump($result);            
 
             if ($result->return->session->statusInfo->status == 'OK') 
             {
@@ -472,7 +545,7 @@ class DPDService
         catch(SoapFault $e)
         {
             echo 'Caught exception: ',  $e->getMessage(), "\n";
-            $this->log($this->client->__getLastRequest());
+            $this->log($this->__getLastRequest());
         }
     }
 
@@ -569,7 +642,11 @@ class DPDService
         try
         {
             // api call
-            $result = $this->client->__soapCall('generateProtocolV1', [$params]);
+            $result = $this->__soapCall('generateProtocolV1', [$params]);
+
+            // debug results
+            if (isset($this->config->debug) && $this->config->debug) 
+                var_dump($result);            
 
             if ($result->return->session->statusInfo->status == 'OK')
             {
@@ -588,7 +665,7 @@ class DPDService
         catch(SoapFault $e)
         {
             echo 'Caught exception: ',  $e->getMessage(), "\n";
-            $this->log($this->client->__getLastRequest());
+            $this->log($this->__getLastRequest());
         }
     }
 
@@ -649,7 +726,11 @@ class DPDService
         try
         {
             // api call
-            $result = $this->client->__soapCall('packagesPickupCallV1', [$params]);
+            $result = $this->__soapCall('packagesPickupCallV1', [$params]);
+
+            // debug results
+            if (isset($this->config->debug) && $this->config->debug) 
+                var_dump($result);            
 
             if (isset($result->return->prototocols)) // 'prototocols' wtf?
             {
@@ -674,7 +755,7 @@ class DPDService
         catch(SoapFault $e)
         {
             echo 'Caught exception: ',  $e->getMessage(), "\n";
-            $this->log($this->client->__getLastRequest());
+            $this->log($this->__getLastRequest());
         }
     }
 
@@ -705,7 +786,11 @@ class DPDService
         try
         {
             
-            $result = $this->client->__soapCall('findPostalCodeV1', [$params]);
+            $result = $this->__soapCall('findPostalCodeV1', [$params]);
+
+            // debug results
+            if (isset($this->config->debug) && $this->config->debug) 
+                var_dump($result);            
 
             $obj->postcode = $postCode;
             $obj->status = $result->return->status;
@@ -715,18 +800,64 @@ class DPDService
         } catch(SoapFault $e)
         {
             echo 'Caught exception: ',  $e->getMessage(), "\n";
-            $this->log($this->client->__getLastRequest());
+            $this->log($this->__getLastRequest());
         }
 
-    }       
+    }  
 
     /**
-     * Log debug data to file
+     * Method to check courier service availability
+     * @param string $postCode 
+     * @param string $countryCode 
+     * @return object
+     */
+    public function checkCourierAvailability($postCode, $countryCode = 'PL')
+    {
+        if ($postCode === '' || is_null($postCode)) 
+            throw new Exception("Postcode are required", 101);
+
+        $postCode = str_replace(['-', ' '], '', $postCode);
+
+        $params = [
+            'senderPlaceV1' => [
+                'countryCode' => $countryCode,
+                'zipCode' => $postCode,
+            ],
+            'authDataV1' => $this->_authData(),
+        ];
+
+        $obj = new StdClass;
+        $obj->method = 'getCourierOrderAvailabilityV1';
+
+        try
+        {
+            
+            $result = $this->__soapCall('getCourierOrderAvailabilityV1', [$params]);
+
+            // debug results
+            if (isset($this->config->debug) && $this->config->debug) 
+                var_dump($result);            
+
+            $obj->postcode = $postCode;
+            $obj->status = $result->return->status;
+
+            return $obj;
+
+        } catch(SoapFault $e)
+        {
+            echo 'Caught exception: ',  $e->getMessage(), "\n";
+            $this->log($this->__getLastRequest());
+        }
+
+    }         
+
+    /**
+     * Log error data to file
      * @param type $logData 
      */
     public function log($logData)
     {
-        if (isset($this->config->debug) && $this->config->debug)
+        if (isset($this->config->log_errors) && $this->config->log_errors)
         {
             if (!is_dir($this->config->log_path)) @mkdir($this->config->log_path, 0777, true);
             $log_file = $this->config->log_path . DIRECTORY_SEPARATOR . date('Y-m-d') .'.log';
