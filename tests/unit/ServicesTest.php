@@ -75,6 +75,83 @@ class ServicesTest extends TestCase
         'phone' => '+22123456',*/
     ];
 
+
+/*    public function test_add_packages_with_services()
+    {
+        $dpd = new DPDService();
+        $dpd->setSender($this->sender);
+
+        $services1 = [
+            'declaredValue' => [
+                'amount' => 10000,
+                'currency' => 'PLN'
+            ]
+        ];
+
+        $services2 = [
+            'guarantee' => [
+                'type' => 'B2C', 
+                'value' => '15:00-18:00'
+            ]
+        ];
+
+        $services3 = [
+            'cod' => [
+                'amount' => 989.32,
+                'currency' => 'PLN'
+            ]
+        ]; 
+
+        $services4 = [
+            'inpers' => '',
+            'carryin'
+        ];                    
+
+        $packages = [];
+
+        // prepare packages
+        array_push($packages, $dpd->createPackage($this->parcels, $this->receiver, 'SENDER', $services1, 'REF123'));
+        array_push($packages, $dpd->createPackage($this->parcels2, $this->receiver, 'SENDER', $services2, 'REF456'));
+        array_push($packages, $dpd->createPackage($this->parcels3, $this->receiver, 'SENDER', $services3, 'REF789'));
+        array_push($packages, $dpd->createPackage($this->parcels3, $this->receiver, 'SENDER', $services4));
+
+        $result = $dpd->sendPackages($packages);
+
+        $this->assertTrue(isset($result->packages) && count($result->packages) == count($packages)); 
+
+        // generate speedlabel
+        $speedlabel = $dpd->generateSpeedLabelsBySessionId($dpd->getSessionId(), $this->pickupAddress);
+        $this->assertTrue(isset($speedlabel->filedata));
+
+        // save speedlabel to pdf file
+        //file_put_contents('pdf/slbl-sid' . $dpd->getSessionId() . '.pdf', $speedlabel->filedata);
+
+        // generate protocol
+        $protocol = $dpd->generateProtocolBySessionId($dpd->getSessionId(), $this->pickupAddress);
+
+        $this->assertTrue(isset($protocol->filedata));
+
+        // save protocol to pdf file
+        //file_put_contents('pdf/prot-sid' . $dpd->getSessionId() . '.pdf', $protocol->filedata);     
+
+        // pickup call
+        $pickupDate = '2017-08-23';
+        $pickupTimeFrom = '13:00';
+        $pickupTimeTo = '16:00';
+        $contactInfo = [
+            'name' => 'Janusz Biznesu',
+            'company' => 'INCO',
+            'phone' => '12 5555555',
+            'email' => 'januszbiznesu@_inco.pl',
+            'comments' => 'proszę dzownić domofonem'
+
+        ];
+
+        $pickup = $dpd->pickupRequest([$protocol->documentId], $pickupDate, $pickupTimeFrom, $pickupTimeTo, $contactInfo, $this->pickupAddress);    
+
+
+    }    
+
     public function test_add_package()
     {
 
@@ -115,6 +192,7 @@ class ServicesTest extends TestCase
         array_push($packages, $dpd->createPackage($this->parcels3, $this->receiver, 'SENDER'));
 
         $result = $dpd->sendPackages($packages);
+
         $this->assertTrue(isset($result->packages) && count($result->packages) == count($packages)); 
 
         // generate speedlabel
@@ -150,6 +228,8 @@ class ServicesTest extends TestCase
 
     }
 
+    
+
 
     public function test_post_code()
     {
@@ -169,6 +249,15 @@ class ServicesTest extends TestCase
 
         $pc5 = $dpd->checkPostCode('00-000');
         $this->assertFalse(isset($pc5->status) && $pc5->status == 'OK');                        
+
+    }*/
+
+    public function test_courier_availability()
+    {
+        $dpd = new DPDService();
+
+        $pc = $dpd->checkCourierAvailability('33-100');
+        $this->assertTrue(isset($pc->status) && $pc->status == 'OK');                        
 
     }
 
