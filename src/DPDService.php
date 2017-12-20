@@ -333,7 +333,7 @@ class DPDService extends SoapClient
             {           
                 $this->sessionId = ($this->apiVersion > 1) ? $result->return->SessionId : $result->return->sessionId;
 
-                $packages = ($this->apiVersion > 1) ? $result->return->Packages->Package[0] : $result->return->packages;
+                $packages = ($this->apiVersion > 1) ? $result->return->Packages->Package : $result->return->packages;
             
                 $obj->sender = $this->getSender();
 
