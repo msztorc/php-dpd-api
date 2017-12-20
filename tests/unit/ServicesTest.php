@@ -40,6 +40,28 @@ class ServicesTest extends TestCase
         ],
     ];      
 
+    private $parcels4 = [
+        0 => [
+            'content' => 'ulotki',
+            'weight' => 1,
+        ],
+        1 => [
+            'content' => 'katalogi',
+            'weight' => 18,
+        ],
+    ];   
+
+    private $parcels5 = [
+        0 => [
+            'content' => 'broszury',
+            'weight' => 1,
+        ],
+        1 => [
+            'content' => 'ulotki',
+            'weight' => 12,
+        ],
+    ];   
+
     private $receiver = [
         'company' => 'ABC Sp. z o.o.',
         'name' => 'Jan Kowalski',
@@ -76,7 +98,7 @@ class ServicesTest extends TestCase
     ];
 
 
-/*    public function test_add_packages_with_services()
+    public function test_add_packages_with_services()
     {
         $dpd = new DPDService();
         $dpd->setSender($this->sender);
@@ -105,15 +127,32 @@ class ServicesTest extends TestCase
         $services4 = [
             'inpers' => '',
             'carryin'
-        ];                    
+        ];      
+
+        $services5 = [
+            'guarantee' => [
+                'type' => 'SATURDAY'
+            ]
+        ];                
 
         $packages = [];
 
         // prepare packages
+
+        // service with declared value
         array_push($packages, $dpd->createPackage($this->parcels, $this->receiver, 'SENDER', $services1, 'REF123'));
+        
+        // service with delivery time
         array_push($packages, $dpd->createPackage($this->parcels2, $this->receiver, 'SENDER', $services2, 'REF456'));
+
+        // service with cod
         array_push($packages, $dpd->createPackage($this->parcels3, $this->receiver, 'SENDER', $services3, 'REF789'));
-        array_push($packages, $dpd->createPackage($this->parcels3, $this->receiver, 'SENDER', $services4));
+
+        // service with caution
+        array_push($packages, $dpd->createPackage($this->parcels4, $this->receiver, 'SENDER', $services4));
+
+        // service with delivery in saturday
+        array_push($packages, $dpd->createPackage($this->parcels5, $this->receiver, 'SENDER', $services5, 'REF1010'));
 
         $result = $dpd->sendPackages($packages);
 
@@ -148,7 +187,6 @@ class ServicesTest extends TestCase
         ];
 
         $pickup = $dpd->pickupRequest([$protocol->documentId], $pickupDate, $pickupTimeFrom, $pickupTimeTo, $contactInfo, $this->pickupAddress);    
-
 
     }    
 
@@ -225,12 +263,9 @@ class ServicesTest extends TestCase
 
         $pickup = $dpd->pickupRequest([$protocol->documentId], $pickupDate, $pickupTimeFrom, $pickupTimeTo, $contactInfo, $this->pickupAddress);    
 
-
     }
 
     
-
-
     public function test_post_code()
     {
         $dpd = new DPDService();
@@ -248,9 +283,10 @@ class ServicesTest extends TestCase
         $this->assertTrue(isset($pc4->status) && $pc4->status == 'OK');     
 
         $pc5 = $dpd->checkPostCode('00-000');
-        $this->assertFalse(isset($pc5->status) && $pc5->status == 'OK');                        
+        $this->assertFalse(isset($pc5->status) && $pc5->status == 'OK');    
 
-    }*/
+
+    }
 
     public function test_courier_availability()
     {
