@@ -145,6 +145,8 @@ $pc4 = $dpd->checkPostCode('33100'); //ok
 
 $pc5 = $dpd->checkPostCode('00-000'); //wrong
 
+$lastError = $dpd->getLastErrors(); //returns last occurred errors as JSON
+
 ```
 
 
