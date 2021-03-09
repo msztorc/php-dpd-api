@@ -8,7 +8,9 @@
             "email": "mirek.sztorc@gmail.com"
         }
     ],
-    "require": {},
+    "require": {
+      "ext-json": "*"
+    },
     "require-dev": {
       "phpunit/phpunit": "5.7.*"
     },
