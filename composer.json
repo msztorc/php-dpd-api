@@ -19,8 +19,8 @@
     "files": ["config.php"]
     },
     "autoload-dev": {
-      "psr-0": {
-        "DPD\\": "tests/"
+      "psr-4": {
+        "DPD\\Unit\\": "tests/unit"
       }
     }
 }
